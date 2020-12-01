@@ -53,12 +53,21 @@ fn lines_to_ints(lines: impl Iterator<Item=io::Result<String>>) -> Result<Vec<i6
     Ok(result)
 }
 
-fn find_result(ints: &mut Vec<i64>) -> Result<i64> {
-    ints.sort_unstable();
+fn find_two_part_result(ints: &[i64], target: i64) -> Result<i64> {
     for i in ints.iter() {
-        let rem = TARGET - i;
+        let rem = target - i;
         if ints.binary_search(&rem).is_ok() {
             return Ok(i * rem);
+        }
+    }
+    Err(Error::new("no result".to_string()))
+}
+
+fn find_three_part_result(ints: &[i64]) -> Result<i64> {
+    for i in ints.iter() {
+        let rem = TARGET - i;
+        if let Ok(result) = find_two_part_result(ints, rem) {
+            return Ok(i * result);
         }
     }
     Err(Error::new("no result".to_string()))
@@ -69,8 +78,11 @@ fn main() -> Result<()>{
     let args = env::args().collect::<Vec<String>>();
     if args.len() > 1 {
         let mut ints = lines_to_ints(read_lines(&args[1])?)?;
-        let result = find_result(&mut ints)?;
-        println!("The result is {}", result);
+        ints.sort_unstable();
+        let two_part_result = find_two_part_result(&ints, TARGET)?;
+        println!("The two part result is {}", two_part_result);
+        let three_part_result = find_three_part_result(&ints)?;
+        println!("The three part result is {}", three_part_result);
         Ok(())
     } else {
         Err(Error::new("filename argument required".to_string()))
